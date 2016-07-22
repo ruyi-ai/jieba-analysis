@@ -1,5 +1,5 @@
 # [Jieba-analysis](https://github.com/huaban/jieba-analysis)
-* alter by thidtc 2016
+* altered by thidtc 2016
 * 修改
   - 关闭HMM模型
   - 增加词性标注（不影响现有分词的功能以及接口)

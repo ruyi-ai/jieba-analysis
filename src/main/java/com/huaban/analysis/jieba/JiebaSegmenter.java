@@ -5,12 +5,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import com.huaban.analysis.jieba.viterbi.FinalSeg;
 
 
 public class JiebaSegmenter {
     private static WordDictionary wordDict = WordDictionary.getInstance();
     private static FinalSeg finalSeg = FinalSeg.getInstance();
+    private static Pattern re_eng = Pattern.compile("[a-zA-Z0-9]");
 
     public static enum SegMode {
         INDEX,
@@ -93,7 +97,8 @@ public class JiebaSegmenter {
                     // process
                     if (mode == SegMode.SEARCH) {
                         for (String word : sentenceProcess(sb.toString())) {
-                            tokens.add(new SegToken(word, offset, offset += word.length()));
+                            tokens.add(new SegToken(word, offset, offset += word.length(),
+				wordDict.getNature(word)));
                         }
                     }
                     else {
@@ -104,7 +109,8 @@ public class JiebaSegmenter {
                                 for (; j < token.length() - 1; ++j) {
                                     gram2 = token.substring(j, j + 2);
                                     if (wordDict.containsWord(gram2))
-                                        tokens.add(new SegToken(gram2, offset + j, offset + j + 2));
+                                        tokens.add(new SegToken(gram2, offset + j, offset + j + 2,
+						wordDict.getNature(gram2)));
                                 }
                             }
                             if (token.length() > 3) {
@@ -113,25 +119,30 @@ public class JiebaSegmenter {
                                 for (; j < token.length() - 2; ++j) {
                                     gram3 = token.substring(j, j + 3);
                                     if (wordDict.containsWord(gram3))
-                                        tokens.add(new SegToken(gram3, offset + j, offset + j + 3));
+                                        tokens.add(new SegToken(gram3, offset + j, offset + j + 3,
+						wordDict.getNature(gram3)));
                                 }
                             }
-                            tokens.add(new SegToken(token, offset, offset += token.length()));
+                            tokens.add(new SegToken(token, offset, offset += token.length(),
+						wordDict.getNature(token)));
                         }
                     }
                     sb = new StringBuilder();
                     offset = i;
                 }
                 if (wordDict.containsWord(paragraph.substring(i, i + 1)))
-                    tokens.add(new SegToken(paragraph.substring(i, i + 1), offset, ++offset));
+                    tokens.add(new SegToken(paragraph.substring(i, i + 1), offset, ++offset, 
+			wordDict.getNature(paragraph.substring(i, i + 1))));
                 else
-                    tokens.add(new SegToken(paragraph.substring(i, i + 1), offset, ++offset));
+                    tokens.add(new SegToken(paragraph.substring(i, i + 1), offset, ++offset,
+			wordDict.getNature(paragraph.substring(i, i + 1))));
             }
         }
         if (sb.length() > 0)
             if (mode == SegMode.SEARCH) {
                 for (String token : sentenceProcess(sb.toString())) {
-                    tokens.add(new SegToken(token, offset, offset += token.length()));
+                    tokens.add(new SegToken(token, offset, offset += token.length(),
+			wordDict.getNature(token)));
                 }
             }
             else {
@@ -142,7 +153,8 @@ public class JiebaSegmenter {
                         for (; j < token.length() - 1; ++j) {
                             gram2 = token.substring(j, j + 2);
                             if (wordDict.containsWord(gram2))
-                                tokens.add(new SegToken(gram2, offset + j, offset + j + 2));
+                                tokens.add(new SegToken(gram2, offset + j, offset + j + 2,
+					wordDict.getNature(gram2)));
                         }
                     }
                     if (token.length() > 3) {
@@ -151,10 +163,12 @@ public class JiebaSegmenter {
                         for (; j < token.length() - 2; ++j) {
                             gram3 = token.substring(j, j + 3);
                             if (wordDict.containsWord(gram3))
-                                tokens.add(new SegToken(gram3, offset + j, offset + j + 3));
+                                tokens.add(new SegToken(gram3, offset + j, offset + j + 3,
+					wordDict.getNature(gram3)));
                         }
                     }
-                    tokens.add(new SegToken(token, offset, offset += token.length()));
+                    tokens.add(new SegToken(token, offset, offset += token.length(),
+			wordDict.getNature(token)));
                 }
             }
 
@@ -174,47 +188,27 @@ public class JiebaSegmenter {
         int x = 0;
         int y = 0;
         String buf;
+
         StringBuilder sb = new StringBuilder();
         while (x < N) {
             y = route.get(x).key + 1;
             String lWord = sentence.substring(x, y);
-            if (y - x == 1)
+            if (re_eng.matcher(lWord).find() && lWord.length() == 1) {
                 sb.append(lWord);
-            else {
+                x = y;
+            } else {
                 if (sb.length() > 0) {
-                    buf = sb.toString();
+                    tokens.add(sb.toString());
                     sb = new StringBuilder();
-                    if (buf.length() == 1) {
-                        tokens.add(buf);
-                    }
-                    else {
-                        if (wordDict.containsWord(buf)) {
-                            tokens.add(buf);
-                        }
-                        else {
-                            finalSeg.cut(buf, tokens);
-                        }
-                    }
                 }
                 tokens.add(lWord);
+                x = y;
             }
-            x = y;
         }
-        buf = sb.toString();
-        if (buf.length() > 0) {
-            if (buf.length() == 1) {
-                tokens.add(buf);
-            }
-            else {
-                if (wordDict.containsWord(buf)) {
-                    tokens.add(buf);
-                }
-                else {
-                    finalSeg.cut(buf, tokens);
-                }
-            }
-
-        }
+        if (sb.length() > 0) {
+            tokens.add(sb.toString());
+            sb = new StringBuilder();
+        } 
         return tokens;
     }
 }

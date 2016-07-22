@@ -23,6 +23,7 @@ public class WordDictionary {
     private static String USER_DICT_SUFFIX = ".dict";
 
     public final Map<String, Double> freqs = new HashMap<String, Double>();
+    public final Map<String, String> natures = new HashMap<String, String>();
     public final Set<String> loadedPath = new HashSet<String>();
     private Double minFreq = Double.MAX_VALUE;
     private Double total = 0.0;
@@ -101,9 +102,11 @@ public class WordDictionary {
 
                 String word = tokens[0];
                 double freq = Double.valueOf(tokens[1]);
+                String nature = String.valueOf(tokens[2]);
                 total += freq;
                 word = addWord(word);
                 freqs.put(word, freq);
+                natures.put(word, nature);
             }
             // normalize
             for (Entry<String, Double> entry : freqs.entrySet()) {
@@ -191,5 +194,12 @@ public class WordDictionary {
             return freqs.get(key);
         else
             return minFreq;
+    }
+
+    public String getNature(String key) {
+        if (natures.containsKey(key))
+            return natures.get(key);
+        else
+            return "";
     }
 }

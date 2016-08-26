@@ -7,3 +7,6 @@
     + jieba-analysis-1.0.3-SNAPSHOT.jar        
     + jieba-analysis-1.0.3-SNAPSHOT-javadoc.jar
     + jieba-analysis-1.0.3-SNAPSHOT-sources.jar
+
+打包的快捷路径
+  mvn clean package -DskipTests
